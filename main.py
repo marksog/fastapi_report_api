@@ -1,5 +1,8 @@
 from enum import Enum
 from fastapi import FastAPI
+from pydandic import BaseModel
+
+
 
 app = FastAPI()
 
@@ -10,6 +13,7 @@ class PotentialOperation(str, Enum):
     new_potential = "new_potential"
     modify_potential = "modify_potential"
     delete_potential = "delete_potential"
+    convert_potential = "convert_potential"
 
 # Path Parameters to get a list specific operations for disciples
 class DisciplesOperation(str, Enum):
@@ -27,6 +31,55 @@ class LoginOperations(str, Enum):
     modify_profile = "modify_profile"
     reset_password = "reset_password"
 
+# Request Data Models
+class PotentialContact(BaseModel):
+    first_name: str
+    last_name: str | None = None
+    user_id: int
+    contact: dict
+    location: str 
+    notes: str | None = None
+    date: str
+    disciple: bool = False 
+
+data = {
+    "potentials": [
+        {
+            "first_name": "John",
+            "last_name": "Pope",
+            "user_id": 1,
+            "contact": {
+                "email": "john@gmail.com",
+                "phone": "+1234567890",
+                "instagram": "@johnpope",
+                "facebook": "john.pope",
+                "twitter": "@johnpope",
+                "snapchat": "johnpope123",
+            },
+            "location": "the place of meeting",
+            "notes": "some notes about the person",
+            "date": "2023-10-01"
+        }    
+    ],
+    "disciples": [
+        {
+            "first_name": "John",
+            "last_name": "Pope",
+            "user_id": 1,
+            "contact": {
+                "email": "john@gmail.com",
+                "phone": "+1234567890",
+                "instagram": "@johnpope",
+                "facebook": "john.pope",
+                "twitter": "@johnpope",
+                "snapchat": "johnpope123",
+            },
+            "location": "the place of meeting",
+            "notes": "some notes about the person",
+            "date": "2023-10-01"
+        } 
+    ]
+}
 
 
 
@@ -73,6 +126,22 @@ async def get_new_potential(potential: PotentialOperation, potential_id: int):
     returns a new potential/contact details
     """
     # a specific potential
+    # data structure should return just a specific potential from data base. should potential be tied to loggeed in user\
+
+    return {}
+
+# creating a new potential
+@app.post("/potential/{new_potential}")
+async def create_potential(new_potential: PotentialOperation, potential_contact: PotentialContact):
+    """
+    creates a new potential/contact details
+    """
+    # create a new potential
+    return {"message": "New potential created successfully", "potential_contact": potential_contact}
+
+# modifying a potential
+@app.put("/potential/{modify_potential}/{potential_id}")
+async def modify_potential(modify_potential: PotentialOperation, potential_id: int, potential_contact: PotentialContact):
     return {}
 
 # modifying a potential
@@ -82,7 +151,17 @@ async def modify_potential(modify_potential: PotentialOperation, potential_id: i
     modifies a specific potential/contact details
     """
     # modify a specific potential
-    return {"message": "Potential modified successfully"}
+    return {"message": "Potential modified successfully", "potential_contact": potential_contact}
+
+# converting a potential to a disciple
+@app.put("/potential/{convert_potential}/{potential_id}")
+async def convert_potential(convert_potential: PotentialOperation, potential_id: int):
+    """
+    converts a specific potential/contact details to a disciple
+    """
+    # convert a specific potential to a disciple
+    # logic to change disciple field to True
+    return {"message": "Potential converted to disciple successfully"}
 
 # deleting a potential
 @app.delete("/potential/{delete_potential}/{potential_id}")
