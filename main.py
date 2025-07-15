@@ -82,6 +82,8 @@ data = {
 }
 
 
+
+
 # Potentials Endpoints
 @app.get("/potentials")
 async def get_potentials():
@@ -140,6 +142,11 @@ async def create_potential(new_potential: PotentialOperation, potential_contact:
 # modifying a potential
 @app.put("/potential/{modify_potential}/{potential_id}")
 async def modify_potential(modify_potential: PotentialOperation, potential_id: int, potential_contact: PotentialContact):
+    return {}
+
+# modifying a potential
+@app.put("/potential/{modify_potential}/{potential_id}")
+async def modify_potential(modify_potential: PotentialOperation, potential_id: int):
     """
     modifies a specific potential/contact details
     """
