@@ -20,13 +20,13 @@ def create_potential(
 ):
     """
     Create a new potential contact.
-    Any authenticated user can create potentials, which will be associated with them as the leader.
+    Any authenticated user can create potentials, which will be associated with them as the creator.
     """
     # Set current date if not provided
     if potential.date_added is None:
         potential.date_added = datetime.utcnow()
     
-    return crud.create_potential(db=db, potential=potential, leader_id=current_user.id)
+    return crud.create_potential(db=db, potential=potential, creator_id=current_user.id)
 
 @router.get("/", response_model=List[schemas.Potential])
 def read_potentials(
@@ -59,9 +59,9 @@ def read_potentials(
             end_date=end_date
         )
     else:
-        potentials = crud.get_potentials_by_leader_with_filters(
+        potentials = crud.get_potentials_by_creator_with_filters(
             db,
-            leader_id=current_user.id,
+            creator_id=current_user.id,
             skip=skip,
             limit=limit,
             is_disciple=is_disciple,
@@ -86,7 +86,7 @@ def read_potential(
         raise HTTPException(status_code=404, detail="Potential not found")
     
     # Authorization check
-    if current_user.role not in ["admin", "pastor"] and db_potential.leader_id != current_user.id:
+    if current_user.role not in ["admin", "pastor"] and db_potential.creator_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to access this potential"
@@ -110,7 +110,7 @@ def update_potential(
         raise HTTPException(status_code=404, detail="Potential not found")
     
     # Authorization check
-    if current_user.role not in ["admin", "pastor"] and db_potential.leader_id != current_user.id:
+    if current_user.role not in ["admin", "pastor"] and db_potential.creator_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to update this potential"
@@ -151,7 +151,7 @@ def delete_potential(
         raise HTTPException(status_code=404, detail="Potential not found")
     
     # Authorization check
-    if current_user.role not in ["admin", "pastor"] and db_potential.leader_id != current_user.id:
+    if current_user.role not in ["admin", "pastor"] and db_potential.creator_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to delete this potential"
@@ -178,17 +178,25 @@ def convert_to_disciple(
 ):
     """
     Convert a potential to a disciple.
-    Users can only convert potentials they created unless they're admin/pastor.
+    Only leaders, pastors, and admins can convert potentials.
+    Leaders can only convert their own potentials.
     """
     db_potential = crud.get_potential(db, potential_id=potential_id)
     if db_potential is None:
         raise HTTPException(status_code=404, detail="Potential not found")
     
-    # Authorization check
-    if current_user.role not in ["admin", "pastor"] and db_potential.leader_id != current_user.id:
+    # Authorization check - must be at least leader
+    if current_user.role not in ["admin", "pastor", "leader"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to convert this potential"
+            detail="Only leaders and above can convert potentials"
+        )
+    
+    # Additional check for leaders - can only convert their own
+    if current_user.role == "leader" and db_potential.creator_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Leaders can only convert their own potentials"
         )
     
     # Check if already a disciple
@@ -207,11 +215,11 @@ def convert_to_disciple(
         notes=db_potential.notes,
         date_added=db_potential.date_added,
         is_worker=False,
-        leader_id=db_potential.leader_id
+        creator_id=current_user.id
     )
     
     # Create the disciple
-    disciple = crud.create_disciple(db=db, disciple=disciple_data, leader_id=current_user.id)
+    disciple = crud.create_disciple(db=db, disciple=disciple_data)
     
     # Update potential to mark as disciple
     crud.update_potential_disciple_status(db=db, potential_id=potential_id, is_disciple=True)
@@ -223,7 +231,10 @@ def convert_to_disciple(
         table_name="potentials",
         record_id=potential_id,
         user_id=current_user.id,
-        changes={"converted_to_disciple_id": disciple.id}
+        changes={
+            "converted_to_disciple_id": disciple.id,
+            "previous_potential": schemas.Potential.from_orm(db_potential).dict()
+        }
     )
     
     return disciple

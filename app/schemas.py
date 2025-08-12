@@ -30,9 +30,11 @@ class User(UserBase):
     location: Optional[str] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class Token(BaseModel):
+    access_token: str
+    token_type: str
     username: Optional[str] = None
 
 class PotentialBase(BaseModel):
@@ -52,7 +54,7 @@ class Potential(PotentialBase):
     leader_id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class DiscipleBase(BaseModel):
     first_name: str
@@ -71,7 +73,7 @@ class Disciple(DiscipleBase):
     leader_id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class WorkerBase(BaseModel):
     first_name: str
@@ -90,7 +92,7 @@ class Worker(WorkerBase):
     date_added: datetime = Field(default_factory=datetime.utcnow)
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class AuditLogBase(BaseModel):
     action: str
@@ -104,6 +106,6 @@ class AuditLog(AuditLogBase):
     timestamp: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 

@@ -12,9 +12,9 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     location = Column(String)
 
-    potentials = relationship("Potential", back_populates="leaders")
-    disciples = relationship("Disciple", back_populates="leader")
-    workers = relationship("Worker", back_populates="leader")
+    created_potentials = relationship("Potential", back_populates="creator")
+    created_disciples = relationship("Disciple", back_populates="creator")
+    managed_workers = relationship("Worker", back_populates="manager")
 
 class Potential(Base):
     __tablename__ = 'potentials'
@@ -27,9 +27,9 @@ class Potential(Base):
     notes = Column(String, nullable=True)
     date_added = Column(DateTime)
     is_disciple = Column(Boolean, default=False)
-    leader_id = Column(Integer, ForeignKey('users.id'))
+    creator_id = Column(Integer, ForeignKey('users.id'))
 
-    leader = relationship("User", back_populates="potentials")
+    creator = relationship("User", back_populates="created_potentials")
 
 class Disciple(Base):
     __tablename__ = 'disciples'
@@ -41,9 +41,9 @@ class Disciple(Base):
     location = Column(String)
     notes = Column(String, nullable=True)
     date_added = Column(DateTime)
-    leader_id = Column(Integer, ForeignKey('users.id'))
+    creator_id = Column(Integer, ForeignKey('users.id'))
 
-    leader = relationship("User", back_populates="disciples")
+    creator = relationship("User", back_populates="created_disciples")
 
 class Worker(Base):
     __tablename__ = 'workers'
@@ -55,9 +55,9 @@ class Worker(Base):
     location = Column(String)
     notes = Column(String, nullable=True)
     date_added = Column(DateTime)
-    leader_id = Column(Integer, ForeignKey('users.id'))
+    manager_id = Column(Integer, ForeignKey('users.id'))
 
-    leader = relationship("User", back_populates="workers")
+    manager = relationship("User", back_populates="managed_workers")
 
 class AuditLog(Base):
     __tablename__ = 'audit_logs'
